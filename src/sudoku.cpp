@@ -8,19 +8,37 @@ Sudoku::Sudoku(int n){
     this->n = n;
     this->subMatrices = n;
     this->board = vector<vector<int>>(n, vector<int>(n, 0));
+    this->subMatrixFilled = vector<vector<bool>>(n, vector<bool>(n, false));
 }
 
 Sudoku::Sudoku(int n, vector<vector<int>> board){
     this->n = n;
     this->subMatrices = n;
     this->board = board;
+    // Isi informasi subMatrixFilled, yaitu apakah angka 1 pada submatrix 1 sudah ada atau belum
+    for (int i = 0; i < n; i++){
+        for (int j = 0; j < n; j++){
+            if (board[i][j] != 0){
+                this->subMatrixFilled[getSubmatrix(i, j)][board[i][j] - 1] = true;
+            }
+        }
+    }
 }
 
 
 Sudoku::Sudoku(const Sudoku& sudoku){
     this->n = sudoku.n;
     this->subMatrices = sudoku.subMatrices;
-    this->board = sudoku.board;
+    this->board = vector<vector<int>>(n, vector<int>(n, 0));
+    this->subMatrixFilled = vector<vector<bool>>(n, vector<bool>(n, false));
+    for (int i = 0; i < n; i++){
+        for (int j = 0; j < n; j++){
+            this->board[i][j] = sudoku.board[i][j];
+            if (board[i][j] != 0){
+                this->subMatrixFilled[getSubmatrix(i, j)][board[i][j] - 1] = true;
+            }
+        }
+    }
 }
 
 void Sudoku::print(){
@@ -50,6 +68,10 @@ void Sudoku::fillBoard(string filename){
             while (getline(file, line)){
                 for (int j = 0; j < n; j++){
                     board[i][j] = (int)((line[j]) - 48);
+                    // Update informasi pada subMatrixFilled
+                    if (board[i][j] != 0){
+                        this->subMatrixFilled[getSubmatrix(i, j)][board[i][j] - 1] = true;
+                    }
                 }
                 i++;
             }
@@ -62,6 +84,10 @@ void Sudoku::fillBoard(string filename){
 
 void Sudoku::set(int i, int j, int val){
     board[i][j] = val;
+    // Update informasi pada subMatrixFilled
+    if (val != 0){
+        this->subMatrixFilled[getSubmatrix(i, j)][val - 1] = true;
+    }
 }
 
 int Sudoku::get(int i, int j){
@@ -98,6 +124,7 @@ bool Sudoku::checkCol(int i, int j, int val){
 }
 
 bool Sudoku::checkSubMatrix(int i, int j, int val){
+    // return true jika pada submatrix tersebut belum ada nilai val-1
     int subMatrix = getSubmatrix(i, j);
     int modifierKolom = ((subMatrix) % (int) sqrt(n)) * sqrt(n);
     int modifierBaris = ((subMatrix) / (int) sqrt(n)) * sqrt(n);
@@ -109,10 +136,15 @@ bool Sudoku::checkSubMatrix(int i, int j, int val){
         }
     }
     return true;
+    // return (this->subMatrixFilled[subMatrix][val - 1]);
 }
 
 bool Sudoku::isValid(int i, int j, int val){
     return checkRow(i, j, val) && checkCol(i, j, val) && checkSubMatrix(i, j, val);
+}
+
+bool Sudoku::isValidBacktrack(int i, int j, int val){
+    return checkRow(i, j, val) && checkCol(i, j, val) && (this->subMatrixFilled[getSubmatrix(i, j)][val - 1] == false);
 }
 
 bool Sudoku::isThereEmptySpace(int &i, int &j){
@@ -136,7 +168,7 @@ bool Sudoku::solveBacktracking(int *simpulDibangkitkan){
         // Jika masih ada slot kosong, akan diisi dengan angka 1 sampai n
         for (int k = 1; k <= n; k++){
             // Cek apakah penempatan valid, jika iya, lakukan rekursi
-            if (isValid(i, j, k)){
+            if (isValidBacktrack(i, j, k)){
                 set(i, j, k);
                 *simpulDibangkitkan += 1;
                 if (solveBacktracking(simpulDibangkitkan)){
@@ -144,6 +176,7 @@ bool Sudoku::solveBacktracking(int *simpulDibangkitkan){
                 } else {
                     // Kembalikan lagi ke 0 karena itu berarti tidak mengarah ke solusi
                     set(i, j, 0);
+                    subMatrixFilled[getSubmatrix(i, j)][k - 1] = false;
                 }
             }
         }
@@ -153,34 +186,36 @@ bool Sudoku::solveBacktracking(int *simpulDibangkitkan){
 
 // Fungsi untuk mengecek apakah sudoku yang dihasilkan merupakan solusi
 bool Sudoku::isSolution(){
-    bool solution = true;
     for (int i = 0; i < n; i++){
         for (int j = 0; j < n; j++){
             if (!isValid(i, j, get(i, j))){
-                solution = false;
+                return false;
             }
         }
     }
-    return solution;
+    return true;
 }
 
-bool Sudoku::solveExhaustiveSearch(int *simpulDibangkitkan){
+bool Sudoku::solveBruteForce(int *solusiDibangkitkan){
     // Basis adalah ketika sudah penuh semua, cek apakah dia solusi
     int i , j ;
     // Basis ketika sudah tidak ada yang kosong
+    // this->print();
     if (!this->isThereEmptySpace(i, j)){
-        *simpulDibangkitkan += 1;
+        *solusiDibangkitkan += 1;
         if (this->isSolution()) return true;
+        else return false;
     } else {
         // Jika masih ada slot kosong, akan diisi dengan angka 1 sampai n
         for (int k = 1; k <= n; k++){
-            // Cek apakah penempatan valid, jika iya, lakukan rekursi
+            // lakukan rekursi
             set(i, j, k);
-            if (solveExhaustiveSearch(simpulDibangkitkan)){
+            if (solveBruteForce(solusiDibangkitkan) ){
                 return true;
             } else {
                 // Kembalikan lagi ke 0 karena itu berarti tidak mengarah ke solusi
                 set(i, j, 0);
+                subMatrixFilled[getSubmatrix(i, j)][k - 1] = false;
             }
             
         }

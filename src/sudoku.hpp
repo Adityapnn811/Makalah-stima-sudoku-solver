@@ -10,6 +10,8 @@ class Sudoku {
     private:
         int n;
         int subMatrices;
+        vector<vector<bool>> subMatrixFilled; // Menyimpan sebuah matriks berukuran nxn yang mencatat angka pada submatriks dengan nilai
+        // submatriks dari 0 hingga n-1 dan kolom dari 0 hingga n-1
         vector<vector<int>> board;
     public:
         // Constructor sebuah matriks n x n, submatrix ditentukan dari n
@@ -33,10 +35,14 @@ class Sudoku {
         bool checkCol(int i, int j, int val); // Return true apabila val tidak ada di col j
         bool checkSubMatrix(int i, int j, int val); // Return true apabila val tidak ada di submatrix
         bool isValid(int i, int j, int val); // Mengecek apakah val legal
+        bool isValidBacktrack(int i, int j, int val);
         bool isThereEmptySpace(int &i, int &j); // Mengecek apakah masih ada 0 di papan sekaligus mengembalikan nilai i dan j tempat 0 berada
         bool isSolution(); // Untuk exhaustive search
+        void fillFilledMatrix(bool* arraySubmatrixFilled);
+
         bool solveBacktracking(int *simpulDIbangkitkan);
-        bool solveExhaustiveSearch(int *simpulDibangkitkan);
+        bool solveBruteForce(int *solusiDibangkitkan);
+        bool solveOptimizedBruteForce(int *solusiDibangkitkan);
         // Mungkin bisa liat algoritma branch and bound, nanti fungsi boundnya adalah tinggal berapa yang kosong
 
 };
