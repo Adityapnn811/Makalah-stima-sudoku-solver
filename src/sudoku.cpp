@@ -203,6 +203,7 @@ bool Sudoku::solveBruteForce(int *solusiDibangkitkan){
     // this->print();
     if (!this->isThereEmptySpace(i, j)){
         *solusiDibangkitkan += 1;
+        // cout << "Jumlah simpul yang dibangkitkan saat ini: " << *solusiDibangkitkan << endl;
         if (this->isSolution()) return true;
         else return false;
     } else {
